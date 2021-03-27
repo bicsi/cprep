@@ -43,6 +43,10 @@ class TestCase:
     generator_name: str
     info: str
 
+    @property
+    def generated(self):
+        return self.input_text and self.answer_text
+
 
 @dataclass
 class ProblemCfg:

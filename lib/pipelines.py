@@ -132,6 +132,9 @@ def compute_evaluation_results(
 
         # Evaluate and print results for each solution.
         for sol in solution_files:
+            if not tc.generated:
+                print(pad(f"{Style.DIM}-{Style.RESET_ALL}", col_len), end=' ', flush=True)
+                continue
             res = evaluation.evaluate_solution(
                 sol, tc.input_text, tc.answer_text, cfg=cfg)
             verdict = res.verdict
