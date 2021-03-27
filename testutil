@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from commands import make, create
+from commands import make, create, eval
 import argparse
 import os 
 import yaml
@@ -11,10 +11,16 @@ def parse_args():
     # parser.add_argument("dir", help="Path to the base directory containing the problem")
     parser.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "config.yaml"), help="Path to config file")
     subparsers = parser.add_subparsers(help='commands')
+    
     make_parser = subparsers.add_parser("make")
     make_parser.set_defaults(func=make.run_make)
+    
     create_parser = subparsers.add_parser("create", parents=[create.parser])
     create_parser.set_defaults(func=create.run_create)
+
+    eval_parser = subparsers.add_parser("eval", parents=[eval.parser])
+    eval_parser.set_defaults(func=eval.run_eval)
+
     return parser.parse_args()
 
 
@@ -22,5 +28,5 @@ if __name__ == "__main__":
     args = parse_args()
     with open(args.config, 'r') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
-        cfg['base_dir'] = os.path.relpath('.')
+        cfg['base_dir'] = '' # os.path.relpath('.')
     args.func(cfg, args)

@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+import os
+from typing import List
+
 
 @dataclass
 class File:
@@ -12,11 +15,11 @@ class File:
     
     @property 
     def ext(self):
-        return self.src_path.rsplit('.', 1)[1].lower()
+        return os.path.splitext(self.src_path)[-1].lower()[1:]
     
     @property 
     def name(self):
-        return self.src_path.rsplit('/', 1)[1].split('.')[0]
+        return self.src_path.split('/')[-1].split('.')[0]
 
 
 @dataclass
@@ -31,7 +34,8 @@ class EvalResult:
   
 @dataclass
 class TestCase:
-    cmd: str 
+    args: List[str]
+    special_args: List[str]
     input_text: str 
     answer_text: str 
     group_idx: int 
