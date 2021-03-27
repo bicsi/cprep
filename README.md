@@ -13,6 +13,8 @@ that aims to provide an open-source extensible alternative to programming contes
 
 ## How to use
 
+![demo](https://i.ibb.co/NNKBrWF/demo3.gif)
+
 To create a problem, go to some folder and type `testutil create [PROBLEM_NAME]`. To build tests for a problem, make sure you are inside the folder and type `testutil make`.
 
 You can always check the available options by running `testutil --help`
