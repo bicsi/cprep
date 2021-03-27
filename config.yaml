@@ -1,0 +1,21 @@
+
+
+compiler:
+  output_dir: ".temp/exec/"
+  g++: "g++-10"
+  args: ["-std=c++17", "-O3"]
+
+tests_dir: "tests"
+run_deterministic_check: No 
+
+discovery:
+  patterns:
+    - pattern: "gen*.cpp"
+      kind: generator
+    - pattern: "valid*.cpp"
+      kind: validator
+    - pattern: "sol*.cpp"
+      kind: solution
+    - pattern: "tests.sh"
+      kind: tests
+
