@@ -14,7 +14,7 @@ GREEN_TICK = f'{Fore.GREEN}\u2713{Fore.RESET}'
 
 
 NON_DETERMINISTIC_WARNING = """\
-WARNING: Generator '{name}' seems to be non-deterministic. 
+[W] Generator '{name}' seems to be non-deterministic. 
 While this is supported, it may cause problems with reproductibility.
 Please make your generator deterministic, by setting the random seed either as constant, or as command argument.
    Example: `int seed = stoi(argv[1]); srand(seed);`
@@ -172,6 +172,11 @@ def _generate_test_cases(
         cfg: ProblemCfg):
     print("Generating test cases...")
 
+    valid_files = [f for f in files if f.kind == 'validator']
+    if not valid_files:
+        print(Fore.YELLOW + "[W] No validators found. It is recommended to have validators, " +
+            "to check generator output." + Fore.RESET)
+
     model_sol_name = cfg.model_solution
     model_sol_files = [
         f for f in files if f.kind == 'solution' 
@@ -179,11 +184,6 @@ def _generate_test_cases(
     assert len(model_sol_files) == 1, f"Did not find model solution: '{model_sol_name}'"
     [model_sol_file] = model_sol_files
     print(f"Model solution: {Style.BRIGHT}{model_sol_file.src_path}{Style.RESET_ALL}")
-
-    valid_files = [f for f in files if f.kind == 'validator']
-    if not valid_files:
-        print(Fore.YELLOW + "No validators found. It is recommended to have validators, " +
-            "to check generator output." + Fore.RESET)
 
     idx = 1
     print(" ", end="")
