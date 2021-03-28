@@ -17,7 +17,7 @@ and run `{cmd}` again. \
 
 
 def run(cfg, args):
-    problem_config_name = cfg['problem_config_name']
+    problem_config_file = cfg['problem_config_file']
     src_path = os.path.join(os.path.dirname(__file__), '..', 'skel')
     dst_path = os.path.join('.', args.name)
     proc_name = sys.argv[0].split('/')[-1]
@@ -26,6 +26,6 @@ def run(cfg, args):
             dst_path=dst_path, cmd=' '.join([proc_name, *sys.argv[1:]])) + Fore.RESET)
     else:
         shutil.copytree(src_path, dst_path)
-        print(f"To edit metadata about the problem, look for `{problem_config_name}` inside the folder.")
+        print(f"To edit metadata about the problem, look for `{problem_config_file}` inside the folder.")
         print(f"To make the tests, make sure you are inside the directory and run `{proc_name} make`")
         print(Fore.GREEN + f"Problem '{args.name}' created successfully!" + Fore.RESET)

@@ -21,65 +21,6 @@ Please make your generator deterministic, by setting the random seed either as c
 """
 
 
-def check_output(input: str, output: str, answer: str, 
-        checker_file: Optional[File] = None):
-    assert checker_file is None, "Checkers are not supported."
-
-    output = output.splitlines()
-    answer = answer.splitlines()
-    if len(output) != len(answer):
-        return False  
-    for l1, l2 in zip(output, answer):
-        if l1.rstrip() != l2.rstrip():
-            return False 
-    return True
-
-
-
-def run_solution(sol_file: File, input: str, cfg: ProblemCfg, run_twice: bool = True):
-    if not sol_file.compiled:
-        return EvalResult(verdict='CE') 
-        
-    timeout_ms = cfg.time_limit_ms * 3
-    res = EvalResult(verdict='AC')
-
-    n_iters = 2 if run_twice else 1
-
-    time_exec_ms = timeout_ms
-    for i in range(n_iters):
-        tick = time.time()
-        try:
-            presult = subprocess.run(
-                [sol_file.exec_path], 
-                check=True, capture_output=True, 
-                timeout=timeout_ms/1000, 
-                input=input)
-            res.output = presult.stdout
-        except subprocess.CalledProcessError as ex:
-            res.verdict = 'RE'
-            res.info = str(ex)
-        except subprocess.TimeoutExpired as ex:
-            res.verdict = 'TLE'
-        tock = time.time()
-        time_exec_ms = min(time_exec_ms, (tock - tick) * 1000.)
-
-    if res.verdict == 'AC' and time_exec_ms > cfg.time_limit_ms:
-        res.verdict = 'TLE'
-    res.time_exec_ms = time_exec_ms
-    return res 
-    
-
-def evaluate_solution(
-        sol_file: File, input: str, answer: str, 
-        cfg: ProblemCfg, 
-        checker_file: Optional[File] = None):
-    res = run_solution(sol_file, input, cfg)
-    if (res.verdict == 'AC' and not check_output(
-            input, res.output, answer, checker_file)):
-        res.verdict = 'WA'
-    return res
-
-
 def discover_files(cfg, solutions=None, base_dir=""):
     files = discovery.discover(
         base_dir=base_dir, 
@@ -122,6 +63,10 @@ def compute_evaluation_results(
         test_cases: List[TestCase], 
         cfg: ProblemCfg):
     solution_files = [f for f in files if f.kind == 'solution']
+    
+    checker_files = [f for f in files if f.kind == 'checker']
+    assert len(checker_files) <= 1, "We do not support multiple checkers."
+    checker_file = checker_files[0] if checker_files else None
 
     col_len = 15
     header_str = ' '.join([' ' + pad('#', 3)] + [pad(f.name, col_len) for f in solution_files])
@@ -145,7 +90,9 @@ def compute_evaluation_results(
                 print(pad(f"{Style.DIM}-{Style.RESET_ALL}", col_len), end=' ', flush=True)
                 continue
             res = evaluation.evaluate_solution(
-                sol, tc.input_text, tc.answer_text, cfg=cfg)
+                sol, tc.input_text, tc.answer_text, 
+                cfg=cfg, 
+                checker_file=checker_file)
             verdict = res.verdict
             time_limit_ms = cfg.time_limit_ms
             while len(verdict) < 3:
@@ -184,6 +131,10 @@ def _generate_test_cases(
     assert len(model_sol_files) == 1, f"Did not find model solution: '{model_sol_name}'"
     [model_sol_file] = model_sol_files
     print(f"Model solution: {Style.BRIGHT}{model_sol_file.src_path}{Style.RESET_ALL}")
+
+    checker_files = [f for f in files if f.kind == 'checker']
+    assert len(checker_files) <= 1, "We do not support multiple checkers."
+    checker_file = checker_files[0] if checker_files else None
 
     idx = 1
     print(" ", end="")
