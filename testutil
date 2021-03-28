@@ -33,7 +33,13 @@ if __name__ == "__main__":
         with open(cfg['problem_config_file']) as f:
             cfg['problem'] = ProblemCfg(**yaml.load(f, Loader=yaml.FullLoader))
     elif args.command != 'create':
+        print()
         print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory ")
         print(f"  (file '{cfg['problem_config_file']}' not found){Fore.RESET}")
-        exit(-1)
-    args.run(cfg, args)
+        exit(6)
+    try:
+        args.run(cfg, args)
+    except AssertionError as ex:
+        print()
+        print(f"{Fore.RED}[E]: {ex}{Fore.RESET}")
+        exit(6)

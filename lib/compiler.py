@@ -13,14 +13,13 @@ def compile(f: File, gcc_path: str, gcc_args: List[str], output_dir: str):
     output_path = os.path.join(output_dir, f.name)
     cache_path = os.path.join(output_dir, 'cache.txt')
     cache = {}
-    try:
+    if os.path.exists(cache_path):
         with open(cache_path, 'r') as stream:
             for line in stream:
                 if line:
                     k, v = line.strip().split()
                     cache[k] = v
-    except FileNotFoundError:
-        pass
+    assert os.path.exists(f.src_path), f"File '{f.src_path}' does not exist."
     with open(f.src_path, 'r') as stream:
         sha = hashlib.sha256(stream.read().encode('utf-8')).hexdigest()
     if cache.get(f.name) == sha and os.path.isfile(output_path):
@@ -42,7 +41,7 @@ def compile(f: File, gcc_path: str, gcc_args: List[str], output_dir: str):
 
 
 def run(f: File, args: List[str]):
-    assert f.compiled, f"File {f} not compiled"
+    assert f.compiled, f"File '{f}' not compiled"
     output = subprocess.run([f.exec_path] + args, check=True, capture_output=True)
     return output.stdout
 
