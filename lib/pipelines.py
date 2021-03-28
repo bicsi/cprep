@@ -7,6 +7,7 @@ from lib.utils import pad
 from colorama import Style, Fore 
 import os 
 import contextlib
+import functools
 
 
 RED_CROSS = f'{Fore.RED}\u00d7{Fore.RESET}'
@@ -116,6 +117,7 @@ def _generate_test_cases(
         test_cases: List[TestCase], 
         files: List[File], 
         tests_dir: str, 
+        num_workers: int,
         cfg: ProblemCfg):
     print("Generating test cases...")
 
@@ -149,7 +151,11 @@ def _generate_test_cases(
         assert len(gen_files) == 1, f"Did not find generator: '{tc.generator_name}'"
         [gen_file] = gen_files
 
-        generation.generate_test_case(tc, gen_file, model_sol_file, tests_dir, cfg)
+        # Actual generation happens here.
+        generation.generate_test_case(
+            tc, gen_file, model_sol_file, 
+            tests_dir, cfg, num_workers=num_workers)
+
         valid = True
         for valid_file in valid_files:
             if not generation.validate_test_case(tc, valid_file, cfg):
@@ -179,15 +185,21 @@ def generate_test_cases(
         test_cases: List[TestCase], 
         files: List[File], 
         cfg: dict):
+
     tests_dir = cfg['tests_dir']
+    generate = functools.partial(
+        _generate_test_cases, test_cases, files, 
+        tests_dir, cfg['num_workers'], cfg['problem'])
+
     tick = time.time()
-    _generate_test_cases(test_cases, files, tests_dir, cfg['problem'])
+    generate()
     tock = time.time()
+
     if cfg['run_deterministic_check']:
         time.sleep(max(0.1, 1.1 - (tock - tick)))
         chk_test_cases = test_cases.copy()
         with contextlib.redirect_stdout(open(os.devnull, 'w')):
-            _generate_test_cases(test_cases, files, tests_dir, cfg['problem'])
+            generate()
         nd_generators = set()
         for tc1, tc2 in zip(test_cases, chk_test_cases):
             if tc1.generator_name in nd_generators or tc1.input_text == tc2.input_text:

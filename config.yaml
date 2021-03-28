@@ -8,6 +8,7 @@ compiler:
 temp_dir: ".temp"
 tests_dir: "tests"
 run_deterministic_check: No 
+num_workers: 4
 problem_config_file: "problem.yaml"
 
 discovery:
