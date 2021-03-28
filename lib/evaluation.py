@@ -51,6 +51,7 @@ def run_solution(sol_file: File, input: str, cfg: ProblemCfg, run_twice: bool = 
     if res.verdict == 'AC' and time_exec_ms > cfg.time_limit_ms:
         res.verdict = 'TLE'
     res.time_exec_ms = time_exec_ms
+    res.input = input
     return res 
     
 

@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(add_help=False)
 
 def run(cfg, args):
 
-    files = pipelines.discover_files(cfg['discovery'])
+    files = pipelines.discover_files(cfg)
     
     pipelines.compile_files(files, cfg['temp_dir'], cfg['compiler'])
 

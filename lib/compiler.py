@@ -41,7 +41,7 @@ def compile(f: File, gcc_path: str, gcc_args: List[str], output_dir: str):
 
 
 def run(f: File, args: List[str]):
-    assert f.compiled, f"File '{f}' not compiled"
+    assert f.compiled, f"File '{f.src_path}' not compiled"
     output = subprocess.run([f.exec_path] + args, check=True, capture_output=True)
     return output.stdout
 

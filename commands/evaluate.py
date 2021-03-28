@@ -11,9 +11,7 @@ parser.add_argument("solutions", nargs="*", help="Solution source files (default
 
 def run(cfg, args):
     
-    files = pipelines.discover_files(
-        cfg['discovery'], 
-        solutions=args.solutions)
+    files = pipelines.discover_files(cfg, solutions=args.solutions)
     
     pipelines.compile_files(files, cfg['temp_dir'], cfg['compiler'])
     

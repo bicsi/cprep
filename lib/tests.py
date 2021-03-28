@@ -1,10 +1,11 @@
 from typing import List
 from lib.base import File, ProblemCfg, TestCase
+from lib.files import Files
 import os
 
 
-def load_tests(files: List[File], tests_dir: str, cfg: ProblemCfg):
-    tests_files = [f for f in files if f.kind == 'tests']
+def load_tests(files: Files, tests_dir: str, cfg: ProblemCfg):
+    tests_files = files.tests
 
     assert tests_files, "No tests files in problem directory."
 
@@ -35,7 +36,7 @@ def load_tests(files: List[File], tests_dir: str, cfg: ProblemCfg):
             
             # Get generator.
             gen_name = args.pop(0).split('/')[-1]
-            gen_files = [f for f in files if f.kind == 'generator' and f.name == gen_name]
+            gen_files = [f for f in files.generators if f.name == gen_name]
             assert len(gen_files) == 1, f"Bad generator name: '{gen_name}'"
             [gen_file] = gen_files
 

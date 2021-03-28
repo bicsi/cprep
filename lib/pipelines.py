@@ -2,12 +2,13 @@ import subprocess
 from lib.base import EvalResult, File, ProblemCfg, TestCase
 from typing import Optional, List
 import time 
-from lib import discovery, compiler, evaluation, generation
+from lib import compiler, evaluation, generation
 from lib.utils import pad 
 from colorama import Style, Fore 
 import os 
 import contextlib
 import functools
+from lib.files import Files 
 
 
 RED_CROSS = f'{Fore.RED}\u00d7{Fore.RESET}'
@@ -23,29 +24,28 @@ Please make your generator deterministic, by setting the random seed either as c
 
 
 def discover_files(cfg, solutions=None, base_dir=""):
-    files = discovery.discover(
-        base_dir=base_dir, 
-        patterns=cfg['patterns'])
     # If solutions are specified, discard the discovered solutions
     # and use the provided ones instead.
+    files = Files(base_dir, cfg)
     if solutions:
-        files = [f for f in files if f.kind != 'solution']
+        files.files = [f for f in files.files if f.kind != 'solution']
         for src_path in solutions:
-            files.append(File(src_path=src_path, kind='solution'))
+            files.files.append(File(src_path=src_path, kind='solution'))
         
     print("Discovered files: ")
-    pad_len = max(len(f.src_path) for f in files)
-    for f in files:
+    pad_len = max(len(f.src_path) for f in files.files)
+    for f in files.files:
         print(f" - {pad(f.src_path, pad_len)} {Style.BRIGHT}({f.kind}){Style.RESET_ALL}")
     print()
+
     return files
 
 
-def compile_files(files, temp_dir: str, cfg):
+def compile_files(files: Files, temp_dir: str, cfg):
     print("Compiling all cpp files...")
-    files = [f for f in files if f.ext == 'cpp']
-    pad_len = max(len(f.name) for f in files)
-    for f in files:
+    solutions = [f for f in files.files if f.ext == 'cpp']
+    pad_len = max(len(f.name) for f in solutions)
+    for f in solutions:
         print(f" - {pad(f.name, pad_len)} ", end='', flush=True)
         output_dir = os.path.join(temp_dir, cfg['output_dir'])
         compiled, used_cache = compiler.compile(f, 
@@ -60,14 +60,11 @@ def compile_files(files, temp_dir: str, cfg):
 
 
 def compute_evaluation_results(
-        files: List[File], 
+        files: Files, 
         test_cases: List[TestCase], 
         cfg: ProblemCfg):
-    solution_files = [f for f in files if f.kind == 'solution']
-    
-    checker_files = [f for f in files if f.kind == 'checker']
-    assert len(checker_files) <= 1, "We do not support multiple checkers."
-    checker_file = checker_files[0] if checker_files else None
+    solution_files = files.solutions 
+    checker_file = files.checker
 
     col_len = 15
     header_str = ' '.join([' ' + pad('#', 3)] + [pad(f.name, col_len) for f in solution_files])
@@ -115,28 +112,20 @@ def compute_evaluation_results(
 
 def _generate_test_cases(
         test_cases: List[TestCase], 
-        files: List[File], 
+        files: Files, 
         tests_dir: str, 
         num_workers: int,
         cfg: ProblemCfg):
+        
     print("Generating test cases...")
+    print(f"Model solution: {Style.BRIGHT}{cfg.model_solution}{Style.RESET_ALL}")
 
-    valid_files = [f for f in files if f.kind == 'validator']
-    if not valid_files:
+    if not files.validators:
+        print()
         print(Fore.YELLOW + "[W] No validators found. It is recommended to have validators, " +
             "to check generator output." + Fore.RESET)
-
-    model_sol_name = cfg.model_solution
-    model_sol_files = [
-        f for f in files if f.kind == 'solution' 
-        and os.path.abspath(f.src_path) == os.path.abspath(model_sol_name)]
-    assert len(model_sol_files) == 1, f"Did not find model solution: '{model_sol_name}'"
-    [model_sol_file] = model_sol_files
-    print(f"Model solution: {Style.BRIGHT}{model_sol_file.src_path}{Style.RESET_ALL}")
-
-    checker_files = [f for f in files if f.kind == 'checker']
-    assert len(checker_files) <= 1, "We do not support multiple checkers."
-    checker_file = checker_files[0] if checker_files else None
+        print()
+    checker_file = files.checker
 
     idx = 1
     print(" ", end="")
@@ -145,21 +134,10 @@ def _generate_test_cases(
         if tc.group_idx != last_group_idx:
             print("| ", end="")
         last_group_idx = tc.group_idx
-        
-        gen_files = [f for f in files if f.kind == 'generator' 
-                and f.name == tc.generator_name]
-        assert len(gen_files) == 1, f"Did not find generator: '{tc.generator_name}'"
-        [gen_file] = gen_files
 
         # Actual generation happens here.
-        generation.generate_test_case(
-            tc, gen_file, model_sol_file, 
-            tests_dir, cfg, num_workers=num_workers)
-
-        valid = True
-        for valid_file in valid_files:
-            if not generation.validate_test_case(tc, valid_file, cfg):
-                valid = False
+        valid = generation.generate_test_case(
+            tc, files, cfg, num_workers=num_workers)
         output = GREEN_TICK if valid else RED_CROSS
         if valid:
             if tc.info:
@@ -183,7 +161,7 @@ def _generate_test_cases(
 
 def generate_test_cases(
         test_cases: List[TestCase], 
-        files: List[File], 
+        files: Files, 
         cfg: dict):
 
     tests_dir = cfg['tests_dir']

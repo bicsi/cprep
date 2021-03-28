@@ -12,11 +12,10 @@ parser.add_argument("tests", nargs="*",
 
 def run(cfg, args):
     
-    files = pipelines.discover_files(
-        cfg['discovery'], 
-        solutions=[cfg['problem'].model_solution])
+    files = pipelines.discover_files(cfg)
 
     pipelines.compile_files(files, cfg['temp_dir'], cfg['compiler'])
+    
     test_cases = tests.load_tests(files, cfg['tests_dir'], cfg['problem'])
     
     # Filter test cases depending on argument.

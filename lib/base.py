@@ -25,6 +25,7 @@ class File:
 @dataclass
 class EvalResult:
     verdict: str
+    input: str = None
     output: str = None
     stderr: str = None
     time_exec_ms: int = -1
