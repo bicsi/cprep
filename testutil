@@ -1,32 +1,39 @@
 #!/usr/bin/env python3
 
-from commands import make, create, eval
+from commands import runall, create, eval, generate, clean
+from lib.base import ProblemCfg
 import argparse
 import os 
 import yaml
+from colorama import Fore 
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    # parser.add_argument("dir", help="Path to the base directory containing the problem")
-    parser.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "config.yaml"), help="Path to config file")
     subparsers = parser.add_subparsers(help='commands')
     
-    make_parser = subparsers.add_parser("make")
-    make_parser.set_defaults(func=make.run_make)
-    
-    create_parser = subparsers.add_parser("create", parents=[create.parser])
-    create_parser.set_defaults(func=create.run_create)
-
-    eval_parser = subparsers.add_parser("eval", parents=[eval.parser])
-    eval_parser.set_defaults(func=eval.run_eval)
+    for command_module in [runall, create, eval, generate, clean]:
+        name = command_module.__name__.split('.')[-1]
+        subparser = subparsers.add_parser(
+            name, parents=[command_module.parser])
+        subparser.set_defaults(
+            run=command_module.run, 
+            command=name)
 
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    with open(args.config, 'r') as f:
+    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+    with open(config_path, 'r') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
-        cfg['base_dir'] = '' # os.path.relpath('.')
-    args.func(cfg, args)
+        # cfg['base_dir'] = '' # os.path.relpath('.')
+    if os.path.exists(cfg['problem_config_file']):
+        with open(cfg['problem_config_file']) as f:
+            cfg['problem'] = ProblemCfg(**yaml.load(f, Loader=yaml.FullLoader))
+    elif args.command != 'create':
+        print(f"{Fore.RED}ERROR: You don't seem to be inside a problem directory ")
+        print(f"  (file '{cfg['problem_config_file']}' not found){Fore.RESET}")
+        exit(-1)
+    args.run(cfg, args)

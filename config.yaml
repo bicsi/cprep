@@ -1,21 +1,23 @@
 
 
 compiler:
-  output_dir: ".temp/exec/"
+  output_dir: "exec"
   g++: "g++-10"
   args: ["-std=c++17", "-O3"]
 
+temp_dir: ".temp"
 tests_dir: "tests"
 run_deterministic_check: No 
+problem_config_file: "problem.yaml"
 
 discovery:
   patterns:
-    - pattern: "gen*.cpp"
-      kind: generator
-    - pattern: "valid*.cpp"
-      kind: validator
-    - pattern: "sol*.cpp"
-      kind: solution
-    - pattern: "tests.sh"
-      kind: tests
+  - pattern: "gen*.cpp"
+    kind: generator
+  - pattern: "valid*.cpp"
+    kind: validator
+  - pattern: "sol*.cpp"
+    kind: solution
+  - pattern: "tests.sh"
+    kind: tests
 

@@ -8,7 +8,7 @@ from lib.base import File
 KINDS = ['generator', 'validator', 'solution', 'tests']
 
 
-def discover(base_dir, patterns):
+def discover(patterns, base_dir=""):
     result = []
     for p in patterns:
         kind = p['kind']

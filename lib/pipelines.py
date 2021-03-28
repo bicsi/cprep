@@ -2,11 +2,23 @@ import subprocess
 from lib.base import EvalResult, File, ProblemCfg, TestCase
 from typing import Optional, List
 import time 
-from lib import discovery, compiler, evaluation
+from lib import discovery, compiler, evaluation, generation
 from lib.utils import pad 
 from colorama import Style, Fore 
 import os 
+import contextlib
 
+
+RED_CROSS = f'{Fore.RED}\u00d7{Fore.RESET}'
+GREEN_TICK = f'{Fore.GREEN}\u2713{Fore.RESET}'
+
+
+NON_DETERMINISTIC_WARNING = """\
+WARNING: Generator '{name}' seems to be non-deterministic. 
+While this is supported, it may cause problems with reproductibility.
+Please make your generator deterministic, by setting the random seed either as constant, or as command argument.
+   Example: `int seed = stoi(argv[1]); srand(seed);`
+"""
 
 
 def check_output(input: str, output: str, answer: str, 
@@ -68,7 +80,7 @@ def evaluate_solution(
     return res
 
 
-def discover_files(base_dir, cfg, solutions=None):
+def discover_files(cfg, solutions=None, base_dir=""):
     files = discovery.discover(
         base_dir=base_dir, 
         patterns=cfg['patterns'])
@@ -87,21 +99,18 @@ def discover_files(base_dir, cfg, solutions=None):
     return files
 
 
-def compile_files(files, cfg):
+def compile_files(files, temp_dir: str, cfg):
     print("Compiling all cpp files...")
     files = [f for f in files if f.ext == 'cpp']
     pad_len = max(len(f.name) for f in files)
     for f in files:
         print(f" - {pad(f.name, pad_len)} ", end='', flush=True)
-        base_dir = os.path.dirname(f.src_path)
+        output_dir = os.path.join(temp_dir, cfg['output_dir'])
         compiled, used_cache = compiler.compile(f, 
             gcc_path=cfg['g++'], gcc_args=cfg['args'], 
-            output_dir=os.path.join(base_dir, cfg['output_dir']))
+            output_dir=output_dir)
 
-        if compiled:
-            line = f'{Fore.GREEN}\u2713{Fore.RESET}'
-        else:
-            line = f'{Fore.RED}\u00d7{Fore.RESET}'
+        line = GREEN_TICK if compiled else RED_CROSS
         if used_cache:
             line += f" {Style.DIM}(cached){Style.RESET_ALL}"
         print(line)
@@ -154,3 +163,87 @@ def compute_evaluation_results(
         print()
     print('=' * table_len)
     print()
+
+
+def _generate_test_cases(
+        test_cases: List[TestCase], 
+        files: List[File], 
+        tests_dir: str, 
+        cfg: ProblemCfg):
+    print("Generating test cases...")
+
+    model_sol_name = cfg.model_solution
+    model_sol_files = [
+        f for f in files if f.kind == 'solution' 
+        and os.path.abspath(f.src_path) == os.path.abspath(model_sol_name)]
+    assert len(model_sol_files) == 1, f"Did not find model solution: '{model_sol_name}'"
+    [model_sol_file] = model_sol_files
+    print(f"Model solution: {Style.BRIGHT}{model_sol_file.src_path}{Style.RESET_ALL}")
+
+    valid_files = [f for f in files if f.kind == 'validator']
+    if not valid_files:
+        print(Fore.YELLOW + "No validators found. It is recommended to have validators, " +
+            "to check generator output." + Fore.RESET)
+
+    idx = 1
+    print(" ", end="")
+    last_group_idx = 0
+    for tc in test_cases:
+        if tc.group_idx != last_group_idx:
+            print("| ", end="")
+        last_group_idx = tc.group_idx
+        
+        gen_files = [f for f in files if f.kind == 'generator' 
+                and f.name == tc.generator_name]
+        assert len(gen_files) == 1, f"Did not find generator: '{tc.generator_name}'"
+        [gen_file] = gen_files
+
+        generation.generate_test_case(tc, gen_file, model_sol_file, tests_dir, cfg)
+        valid = True
+        for valid_file in valid_files:
+            if not generation.validate_test_case(tc, valid_file, cfg):
+                valid = False
+        output = GREEN_TICK if valid else RED_CROSS
+        if valid:
+            if tc.info:
+                output = f"[{output} {tc.info}]"
+            # Write tests to disk.
+            os.makedirs(tests_dir, exist_ok=True)
+            with open(os.path.join(tests_dir, 
+                    cfg.input_pattern.format(idx=tc.idx)), 'wb') as f:
+                f.write(tc.input_text)
+            with open(os.path.join(tests_dir, 
+                    cfg.answer_pattern.format(idx=tc.idx)), 'wb') as f:
+                f.write(tc.answer_text)
+        else:
+            tc.input_text = tc.answer_text = None
+
+        print(output, end=" ", flush=True)
+    print()
+    print()
+    return test_cases
+
+
+def generate_test_cases(
+        test_cases: List[TestCase], 
+        files: List[File], 
+        cfg: dict):
+    tests_dir = cfg['tests_dir']
+    tick = time.time()
+    _generate_test_cases(test_cases, files, tests_dir, cfg['problem'])
+    tock = time.time()
+    if cfg['run_deterministic_check']:
+        time.sleep(max(0.1, 1.1 - (tock - tick)))
+        chk_test_cases = test_cases.copy()
+        with contextlib.redirect_stdout(open(os.devnull, 'w')):
+            _generate_test_cases(test_cases, files, tests_dir, cfg['problem'])
+        nd_generators = set()
+        for tc1, tc2 in zip(test_cases, chk_test_cases):
+            if tc1.generator_name in nd_generators or tc1.input_text == tc2.input_text:
+                continue
+            print(Fore.YELLOW + Style.BRIGHT + NON_DETERMINISTIC_WARNING.format(
+                name=tc1.generator_name) + Fore.RESET + Style.RESET_ALL)
+            input("Press [ENTER] to continue: ")
+            print()
+            nd_generators.add(tc1.generator_name)
+    return test_cases
