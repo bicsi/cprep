@@ -1,6 +1,7 @@
 import shutil
 import argparse
 from colorama import Fore, Style
+from lib import config
 import os 
 import sys 
 
@@ -17,7 +18,7 @@ and run `{cmd}` again. \
 
 
 def run(cfg, args):
-    problem_config_file = cfg['problem_config_file']
+    problem_config_file = config.get('problem_config_file')
     src_path = os.path.join(os.path.dirname(__file__), '..', 'skel')
     dst_path = os.path.join('.', args.name)
     proc_name = sys.argv[0].split('/')[-1]
