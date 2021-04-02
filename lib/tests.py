@@ -27,6 +27,8 @@ def load_tests(files: Files, tests_dir: str, cfg: ProblemCfg):
     idx = 1
     for group_idx, group in enumerate(test_groups):
         for cmd in group:
+            if not cmd.strip():
+                continue 
             args = cmd.split()
             special = None
             if ' #' in cmd:

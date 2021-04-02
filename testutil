@@ -6,6 +6,7 @@ import argparse
 import os 
 import yaml
 from colorama import Fore 
+from lib import config
 
 
 def parse_args():
@@ -27,15 +28,17 @@ if __name__ == "__main__":
     args = parse_args()
     config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
     with open(config_path, 'r') as f:
-        cfg = yaml.load(f, Loader=yaml.FullLoader)
+        config.load(yaml.load(f, Loader=yaml.FullLoader))
         # cfg['base_dir'] = '' # os.path.relpath('.')
-    if os.path.exists(cfg['problem_config_file']):
-        with open(cfg['problem_config_file']) as f:
-            cfg['problem'] = ProblemCfg(**yaml.load(f, Loader=yaml.FullLoader))
+    cfg = None
+    problem_config_file = config.get('problem_config_file')
+    if os.path.exists(problem_config_file):
+        with open(problem_config_file) as f:
+            cfg = ProblemCfg(**yaml.load(f, Loader=yaml.FullLoader))
     elif args.command != 'create':
         print()
         print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory ")
-        print(f"  (file '{cfg['problem_config_file']}' not found){Fore.RESET}")
+        print(f"  (file '{problem_config_file}' not found){Fore.RESET}")
         exit(6)
     try:
         args.run(cfg, args)

@@ -1,5 +1,5 @@
 import argparse
-from lib import pipelines, tests
+from lib import pipelines
 import os 
 from lib.base import ProblemCfg
 import yaml 
@@ -14,9 +14,9 @@ def run(cfg, args):
     
     files = pipelines.discover_files(cfg)
 
-    pipelines.compile_files(files, cfg['temp_dir'], cfg['compiler'])
+    pipelines.compile_files(files)
     
-    test_cases = tests.load_tests(files, cfg['tests_dir'], cfg['problem'])
+    test_cases = pipelines.load_tests(files, cfg)
     
     # Filter test cases depending on argument.
     if args.tests:

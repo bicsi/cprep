@@ -1,6 +1,7 @@
 from lib.base import File 
 import glob 
 import os 
+from lib import config
 
 
 KINDS = ['generator', 'validator', 'solution', 'tests']
@@ -23,12 +24,11 @@ def _discover(patterns, base_dir=""):
 
 
 class Files:
-    def __init__(self, base_dir, cfg):
-        self.files = _discover(
-            cfg['discovery']['patterns'], base_dir)
+    def __init__(self, base_dir, patterns, cfg=None):
+        self.files = _discover(patterns, base_dir)
         self.model_sol_path = None 
-        if cfg.get('problem'):
-            self.model_sol_path = cfg['problem'].model_solution
+        if cfg:
+            self.model_sol_path = cfg.model_solution
             
     def _all(self, kind: str):
         return [f for f in self.files if f.kind == kind]
@@ -38,7 +38,7 @@ class Files:
         if path:
             files = [f for f in files if f.src_path == path]
 
-        assert len(files) <= 1, f"Multiple {kind}s found."
+        assert len(files) <= 1, f"Multiple {kind}s found: {files}"
         return files[0] if files else None 
 
     @property

@@ -59,6 +59,7 @@ def _generate_stress_goal(
         for salt, res in zip(chunk_salts, results):
             if not res:
                 continue 
+            print(res.input.decode('utf-8'))
             assert res.verdict == 'AC', "Model solution did not run successfully"
             stderr_lines = res.stderr.splitlines()
             assert stderr_lines, "Model solution did not output values on stderr for stress-test optimization"
@@ -93,7 +94,8 @@ def _generate_stress_fail(
             break
         model_results = pool.map(generate, chunk_salts)
         sol_results = pool.starmap(evaluate, [
-            (m_res.input, m_res.output) for m_res in model_results if m_res])
+            (m_res.input, m_res.output) 
+            for m_res in model_results if m_res])
 
         for salt, m_res in zip(chunk_salts, model_results):
             if not m_res:
