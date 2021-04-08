@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
-from commands import runall, create, evaluate, generate, clean
-from lib.base import ProblemCfg
+import commands
 import argparse
 import os 
 import yaml
 from colorama import Fore 
-from lib import config
+from lib import config 
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='commands')
     
-    for command_module in [runall, create, evaluate, generate, clean]:
+    for command_module in [
+            commands.runall, commands.create, 
+            commands.evaluate, commands.generate, 
+            commands.clean, commands.config]:
         name = command_module.__name__.split('.')[-1]
         subparser = subparsers.add_parser(
             name, parents=[command_module.parser])
@@ -26,20 +28,25 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
-    with open(config_path, 'r') as f:
-        config.load(yaml.load(f, Loader=yaml.FullLoader))
-        # cfg['base_dir'] = '' # os.path.relpath('.')
-    cfg = None
-    problem_config_file = config.get('problem_config_file')
-    if os.path.exists(problem_config_file):
-        with open(problem_config_file) as f:
-            cfg = ProblemCfg(**yaml.load(f, Loader=yaml.FullLoader))
-    elif args.command != 'create':
-        print()
-        print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory ")
-        print(f"  (file '{problem_config_file}' not found){Fore.RESET}")
-        exit(6)
+    dicts = []
+    for path in [os.path.dirname(__file__), ""]:
+        config_path = os.path.join(path, "config.yaml")
+        if not os.path.exists(config_path):
+            if path == '' and args.command not in ['create', 'config']:
+                print()
+                print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory ")
+                print(f"  (file 'config.yaml' not found){Fore.RESET}")
+                print(f"Note: If using an older version of testutil, "
+                    "please rename and reconfigure 'problem.yaml' file to match "
+                    "the structure of `testutil config`")
+                exit(6)
+            continue
+        with open(config_path, 'r') as f:
+            dicts.append(yaml.load(f, Loader=yaml.FullLoader))
+    cfg = config.load(*dicts)
+    if cfg.debug:
+        print(yaml.dump(cfg.dict()))
+
     try:
         args.run(cfg, args)
     except AssertionError as ex:

@@ -1,4 +1,5 @@
-from lib.base import TestCase, File, ProblemCfg
+from lib.base import TestCase, File
+from lib.config import TestsConfig, ProblemConfig, GenerationConfig
 from typing import List, Optional
 import os
 from lib import compiler, evaluation
@@ -22,7 +23,7 @@ def _generate_test_case(
         gen_file: File, 
         model_sol_file: File, 
         valid_files: List[File],
-        cfg: ProblemCfg,
+        cfg: ProblemConfig,
         args: List[str],
         salt: str = None):
     if salt:
@@ -39,7 +40,7 @@ def _generate_test_case(
 
 
 def _evaluate(
-        sol: File, checker: Optional[File], cfg: ProblemCfg,
+        sol: File, checker: Optional[File], cfg: ProblemConfig,
         input: str, answer: str, timeout_ms: Optional[float] = None):
     return evaluation.evaluate_solution(
         sol, input, answer, cfg,
@@ -130,7 +131,9 @@ def _generate_stress_fail(
 
 def generate_test_case(
         tc: TestCase, files: Files, 
-        cfg: ProblemCfg, num_workers: int = 1):
+        gen_cfg: GenerationConfig, 
+        problem_cfg: ProblemConfig):
+    num_workers = gen_cfg.num_workers
 
     gen_files = [f for f in files.generators if f.name == tc.generator_name]
     assert len(gen_files) == 1, f"Did not find generator: '{tc.generator_name}'"
@@ -150,7 +153,7 @@ def generate_test_case(
     generate = functools.partial(
         _generate_test_case, 
         gen_file, model_sol_file, 
-        valid_files, cfg, tc.args,
+        valid_files, problem_cfg, tc.args,
     )
 
     if not special:
@@ -186,7 +189,7 @@ def generate_test_case(
     return tc.generated
 
 
-def validate_test_case(input_text: str, valid_file: File, cfg: ProblemCfg):
+def validate_test_case(input_text: str, valid_file: File, cfg: ProblemConfig):
     assert valid_file.compiled, "Validator is not compiled."
     result = evaluation.run_solution(
         valid_file, input_text, cfg, run_twice=False)

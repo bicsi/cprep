@@ -48,12 +48,3 @@ class TestCase:
     def generated(self):
         return self.input_text and self.answer_text
 
-
-@dataclass
-class ProblemCfg:
-    input_file: str 
-    output_file: str 
-    time_limit_ms: int
-    model_solution: str 
-    input_pattern: str 
-    answer_pattern: str 

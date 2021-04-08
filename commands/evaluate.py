@@ -1,7 +1,6 @@
 import argparse
 from lib import pipelines
 import os 
-from lib.base import ProblemCfg
 import yaml 
 
 
@@ -13,7 +12,7 @@ def run(cfg, args):
     
     files = pipelines.discover_files(cfg, solutions=args.solutions)
     
-    pipelines.compile_files(files)
+    pipelines.compile_files(files, cfg)
     
     test_cases = pipelines.load_tests(files, cfg)
     

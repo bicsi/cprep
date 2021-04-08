@@ -1,21 +1,29 @@
-
+temp_dir: ".temp"
+debug: False
 
 compiler:
   output_dir: "exec"
-  g++: "g++-10"
+  gcc: "g++-10"
   args: ["-std=c++17", "-O3"]
 
-temp_dir: ".temp"
-problem_config_file: "problem.yaml"
-
 generation:
-  tests_dir: "tests"
   run_deterministic_check: No 
   num_workers: 4
+  model_solution: "sol.cpp"
+
+tests:
+  tests_dir: "tests"
+  input_pattern: "test-{idx:02}.in"
+  answer_pattern: "test-{idx:02}.ok"
 
 evaluation:
   timeout_multiplier: 3.0          # Execution timeout (TL multiplier) 
   tl_close_range: [0.75, 1.25]     # Range to display close to tl warnings (TL multipliers)
+
+problem:
+  input_file: stdin
+  output_file: stdout
+  time_limit_ms: 400 
 
 discovery:
   patterns:

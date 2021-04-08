@@ -1,5 +1,6 @@
 import subprocess
-from lib.base import EvalResult, File, ProblemCfg
+from lib.base import EvalResult, File
+from lib.config import ProblemConfig
 from typing import Optional
 import time 
 import os
@@ -21,7 +22,7 @@ def check_output(input: str, output: str, answer: str,
 
 
 def run_solution(
-        sol_file: File, input: str, cfg: ProblemCfg,
+        sol_file: File, input: str, cfg: ProblemConfig,
         timeout_ms: float = None, run_twice: bool = True):
     if not sol_file.compiled:
         return EvalResult(verdict='CE') 
@@ -74,7 +75,7 @@ def run_solution(
     
 
 def evaluate_solution(
-        sol_file: File, input: str, answer: str, cfg: ProblemCfg,
+        sol_file: File, input: str, answer: str, cfg: ProblemConfig,
         timeout_ms: float = None, checker_file: Optional[File] = None):
     res = run_solution(sol_file, input, cfg, timeout_ms=timeout_ms)
     if res.verdict == 'AC' and res.time_exec_ms > cfg.time_limit_ms:

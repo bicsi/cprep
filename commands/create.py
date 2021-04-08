@@ -18,7 +18,7 @@ and run `{cmd}` again. \
 
 
 def run(cfg, args):
-    problem_config_file = config.get('problem_config_file')
+    problem_config_file = 'config.yaml'
     src_path = os.path.join(os.path.dirname(__file__), '..', 'skel')
     dst_path = os.path.join('.', args.name)
     proc_name = sys.argv[0].split('/')[-1]
@@ -28,5 +28,6 @@ def run(cfg, args):
     else:
         shutil.copytree(src_path, dst_path)
         print(f"To edit metadata about the problem, look for `{problem_config_file}` inside the folder.")
-        print(f"To make the tests, make sure you are inside the directory and run `{proc_name} make`")
+        print(f"To make the tests, make sure you are inside the directory and run `{proc_name} generate`")
+        print(f"To evaluate the solutions, run `{proc_name} evaluate`")
         print(Fore.GREEN + f"Problem '{args.name}' created successfully!" + Fore.RESET)

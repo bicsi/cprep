@@ -2,7 +2,6 @@ import argparse
 import yaml
 import os 
 from lib import pipelines
-from lib.base import ProblemCfg
 
 
 parser = argparse.ArgumentParser(add_help=False)
@@ -12,7 +11,7 @@ def run(cfg, args):
 
     files = pipelines.discover_files(cfg)
     
-    pipelines.compile_files(files)
+    pipelines.compile_files(files, cfg)
 
     test_cases = pipelines.load_tests(files, cfg)
 

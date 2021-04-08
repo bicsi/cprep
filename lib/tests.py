@@ -1,10 +1,15 @@
 from typing import List
-from lib.base import File, ProblemCfg, TestCase
+from lib.base import File, TestCase
+from lib.config import ProblemConfig, TestsConfig
 from lib.files import Files
 import os
 
 
-def load_tests(files: Files, tests_dir: str, cfg: ProblemCfg):
+def load_tests(files: Files, cfg: TestsConfig):
+    tests_dir = cfg.tests_dir
+    input_pattern = cfg.input_pattern
+    answer_pattern = cfg.answer_pattern
+
     tests_files = files.tests
 
     assert tests_files, "No tests files in problem directory."
@@ -43,8 +48,8 @@ def load_tests(files: Files, tests_dir: str, cfg: ProblemCfg):
             [gen_file] = gen_files
 
             # Read input and answer.
-            input_path = os.path.join(tests_dir, cfg.input_pattern.format(idx=idx, gen=gen_file.name))
-            answer_path = os.path.join(tests_dir, cfg.answer_pattern.format(idx=idx, gen=gen_file.name))
+            input_path = os.path.join(tests_dir, input_pattern.format(idx=idx, gen=gen_file.name))
+            answer_path = os.path.join(tests_dir, answer_pattern.format(idx=idx, gen=gen_file.name))
             input_text, answer_text = None, None
             if os.path.exists(input_path):
                 with open(input_path, 'rb') as f:

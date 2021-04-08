@@ -10,11 +10,11 @@ KINDS = ['generator', 'validator', 'solution', 'tests']
 def _discover(patterns, base_dir=""):
     result = []
     for p in patterns:
-        kind = p['kind']
+        kind = p.kind
         if kind not in KINDS:
             # logger.warning(f"Unknown kind: {kind}. Skipping pattern...")
             continue
-        files = glob.glob(os.path.join(base_dir, p['pattern']))
+        files = glob.glob(os.path.join(base_dir, p.pattern))
         for filepath in files:
             if not any(f.src_path == filepath for f in result):
                 result.append(File(src_path=filepath, kind=kind))
@@ -24,11 +24,9 @@ def _discover(patterns, base_dir=""):
 
 
 class Files:
-    def __init__(self, base_dir, patterns, cfg=None):
+    def __init__(self, base_dir, patterns, model_solution=None):
         self.files = _discover(patterns, base_dir)
-        self.model_sol_path = None 
-        if cfg:
-            self.model_sol_path = cfg.model_solution
+        self.model_sol_path = model_solution
             
     def _all(self, kind: str):
         return [f for f in self.files if f.kind == kind]

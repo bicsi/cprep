@@ -1,5 +1,5 @@
 import subprocess
-from lib.base import EvalResult, File, ProblemCfg, TestCase
+from lib.base import EvalResult, File, TestCase
 from typing import Optional, List
 import time 
 from lib import compiler, evaluation, generation, config, tests
@@ -9,6 +9,7 @@ import os
 import contextlib
 import functools
 from lib.files import Files 
+from lib.config import Config
 from lib import logger 
 
 
@@ -28,12 +29,13 @@ No validators found. It is recommended to \
 have validators, to check generator output."
 
 
-def discover_files(cfg: ProblemCfg, solutions=None):
-    patterns = config.get('discovery.patterns')
-
+def discover_files(cfg: Config, solutions=None):
+    patterns = cfg.discovery.patterns
+    model_solution = cfg.generation.model_solution
+    
     # If solutions are specified, discard the discovered solutions
     # and use the provided ones instead.
-    files = Files("", patterns, cfg=cfg)
+    files = Files("", patterns, model_solution=model_solution)
     if solutions:
         files.files = [f for f in files.files if f.kind != 'solution']
         for src_path in solutions:
@@ -48,12 +50,10 @@ def discover_files(cfg: ProblemCfg, solutions=None):
     return files
 
 
-def compile_files(files: Files):
-    output_dir = os.path.join(
-        config.get('temp_dir'), 
-        config.get('compiler.output_dir'))
-    gcc_path = config.get('compiler.g++')
-    gcc_args = config.get('compiler.args')
+def compile_files(files: Files, cfg: Config):
+    output_dir = os.path.join(cfg.temp_dir, cfg.compiler.output_dir) 
+    gcc_path = cfg.compiler.gcc
+    gcc_args = cfg.compiler.args
     
     print("Compiling all cpp files...")
     solutions = [f for f in files.files if f.ext == 'cpp']
@@ -74,9 +74,12 @@ def compile_files(files: Files):
 def compute_evaluation_results(
         files: Files, 
         test_cases: List[TestCase], 
-        cfg: ProblemCfg):
-    timeout_multiplier = config.get('evaluation.timeout_multiplier')
-    tl_close_range = config.get('evaluation.tl_close_range')
+        cfg: Config):
+    time_limit_ms = cfg.problem.time_limit_ms
+    timeout_multiplier = cfg.evaluation.timeout_multiplier
+    tl_close_range = cfg.evaluation.tl_close_range
+    problem_cfg = cfg.problem
+
     solution_files = files.solutions 
     checker_file = files.checker
 
@@ -101,9 +104,8 @@ def compute_evaluation_results(
             if not tc.generated:
                 print(pad(f"{Style.DIM}-{Style.RESET_ALL}", col_len), end=' ', flush=True)
                 continue
-            time_limit_ms = cfg.time_limit_ms
             res = evaluation.evaluate_solution(
-                sol, tc.input_text, tc.answer_text, cfg,
+                sol, tc.input_text, tc.answer_text, problem_cfg,
                 timeout_ms=time_limit_ms * timeout_multiplier,
                 checker_file=checker_file)
             verdict = res.verdict
@@ -128,15 +130,18 @@ def compute_evaluation_results(
 def _generate_test_cases(
         test_cases: List[TestCase], 
         files: Files, 
-        tests_dir: str,
-        num_workers: int,
-        cfg: ProblemCfg):
+        cfg: Config):
+    gen_cfg = cfg.generation
+    problem_cfg = cfg.problem
+    tests_dir = cfg.tests.tests_dir
+    input_pattern = cfg.tests.input_pattern
+    answer_pattern = cfg.tests.answer_pattern
         
-    print("Generating test cases...")
-    print(f"Model solution: {Style.BRIGHT}{cfg.model_solution}{Style.RESET_ALL}")
+    print(f"Generating {len(test_cases)} test cases...")
+    print(f"Model solution: {Style.BRIGHT}{gen_cfg.model_solution}{Style.RESET_ALL}")
 
-    
     checker_file = files.checker
+    # print(f"Checker: {checker_file.name if checker_file else 'None'}")
 
     idx = 1
     print(" ", end="")
@@ -148,19 +153,17 @@ def _generate_test_cases(
 
         # Actual generation happens here.
         valid = generation.generate_test_case(
-            tc, files, cfg, num_workers=num_workers)
+            tc, files, gen_cfg, problem_cfg)
         output = GREEN_TICK if valid else RED_CROSS
         if valid:
             if tc.info:
                 output = f"[{output} {tc.info}]"
             # Write tests to disk.
-            os.makedirs(tests_dir, exist_ok=True)
-            with open(os.path.join(tests_dir, 
-                    cfg.input_pattern.format(
+            os.makedirs(    tests_dir, exist_ok=True)
+            with open(os.path.join(tests_dir, input_pattern.format(
                         idx=tc.idx, gen=tc.generator_name)), 'wb') as f:
                 f.write(tc.input_text)
-            with open(os.path.join(tests_dir, 
-                    cfg.answer_pattern.format(
+            with open(os.path.join(tests_dir, answer_pattern.format(
                         idx=tc.idx, gen=tc.generator_name)), 'wb') as f:
                 f.write(tc.answer_text)
         else:
@@ -189,14 +192,11 @@ def _generate_test_cases(
 def generate_test_cases(
         test_cases: List[TestCase], 
         files: Files,
-        cfg: ProblemCfg):
-    tests_dir = config.get('generation.tests_dir')
-    num_workers = config.get('generation.num_workers')
-    run_deterministic_check = config.get('generation.run_deterministic_check')
-
+        cfg: Config):
+    run_deterministic_check = cfg.generation.run_deterministic_check
     generate = functools.partial(
-        _generate_test_cases, test_cases, files, 
-        tests_dir, num_workers, cfg)
+        _generate_test_cases, 
+        test_cases, files, cfg)
 
     tick = time.time()
     generate()
@@ -216,6 +216,6 @@ def generate_test_cases(
     return test_cases
 
 
-def load_tests(files: Files, cfg: ProblemCfg):
-    tests_dir = config.get('generation.tests_dir')
-    return tests.load_tests(files, tests_dir, cfg)
+def load_tests(files: Files, cfg: Config):
+    tests_cfg = cfg.tests
+    return tests.load_tests(files, tests_cfg)
