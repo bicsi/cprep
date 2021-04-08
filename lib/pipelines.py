@@ -199,10 +199,13 @@ def generate_test_cases(
             generate()
         nd_generators = set()
         for tc1, tc2 in zip(test_cases, chk_test_cases):
-            if tc1.generator_name in nd_generators or tc1.input_text == tc2.input_text:
+            if tc1.generator_name in nd_generators:
                 continue
-            logger.warning(NON_DETERMINISTIC_WARNING.format(name=tc1.generator_name))
             nd_generators.add(tc1.generator_name)
+            generation.generate_test_case(
+                tc1, files, cfg.generation, cfg.problem)
+            if tc1.input_text != tc2.input_text:
+                logger.warning(NON_DETERMINISTIC_WARNING.format(name=tc1.generator_name))
 
     if run_duplicate_check:
         input_to_tcs = {}
