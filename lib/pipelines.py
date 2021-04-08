@@ -159,7 +159,7 @@ def _generate_test_cases(
             if tc.info:
                 output = f"[{output} {tc.info}]"
             # Write tests to disk.
-            os.makedirs(    tests_dir, exist_ok=True)
+            os.makedirs(tests_dir, exist_ok=True)
             with open(os.path.join(tests_dir, input_pattern.format(
                         idx=tc.idx, gen=tc.generator_name)), 'wb') as f:
                 f.write(tc.input_text)
@@ -171,7 +171,7 @@ def _generate_test_cases(
 
         print(output, end=" ", flush=True)
     print()
-    print(f"Tests written to '{os.path.join(tests_dir, '')}'.")
+    print(f"Tests written to '{os.path.join('.', tests_dir, '')}'.")
     print()
 
     return test_cases
