@@ -11,6 +11,7 @@ import functools
 from lib.files import Files 
 from lib.config import Config
 from lib import logger 
+import copy
 
 
 RED_CROSS = f'{Fore.RED}\u00d7{Fore.RESET}'
@@ -21,8 +22,7 @@ NON_DETERMINISTIC_WARNING = """\
 Generator '{name}' seems to be non-deterministic. 
 While this is supported, it may cause problems with reproductibility.
 Please make your generator deterministic, by setting the random seed either as constant, or as command argument.
-   Example: `int seed = stoi(argv[1]); srand(seed);`
-"""
+   Example: `int seed = stoi(argv[1]); srand(seed);`"""
 
 NO_VALIDATORS_FOUND_WARNING = "\
 No validators found. It is recommended to \
@@ -171,18 +171,6 @@ def _generate_test_cases(
 
         print(output, end=" ", flush=True)
     print()
-
-    input_to_tcs = {}
-    for tc in test_cases:
-        tcs = input_to_tcs.get(tc.input_text, [])
-        tcs.append(tc)
-        input_to_tcs[tc.input_text] = tcs
-    if not files.validators:
-        logger.warning(NO_VALIDATORS_FOUND_WARNING)
-    for tcs in input_to_tcs.values():
-        if len(tcs) > 1:
-            logger.warning(f"Found duplicate tests: [{', '.join(str(tc.idx) for tc in tcs)}]. "
-            "Please fix this by changing arguments or setting different seed values.")
     print(f"Tests written to '{os.path.join(tests_dir, '')}'.")
     print()
 
@@ -194,6 +182,8 @@ def generate_test_cases(
         files: Files,
         cfg: Config):
     run_deterministic_check = cfg.generation.run_deterministic_check
+    run_duplicate_check = cfg.generation.run_duplicate_check
+
     generate = functools.partial(
         _generate_test_cases, 
         test_cases, files, cfg)
@@ -204,7 +194,7 @@ def generate_test_cases(
 
     if run_deterministic_check:
         time.sleep(max(0.1, 1.1 - (tock - tick)))
-        chk_test_cases = test_cases.copy()
+        chk_test_cases = copy.deepcopy(test_cases)
         with contextlib.redirect_stdout(open(os.devnull, 'w')):
             generate()
         nd_generators = set()
@@ -213,6 +203,21 @@ def generate_test_cases(
                 continue
             logger.warning(NON_DETERMINISTIC_WARNING.format(name=tc1.generator_name))
             nd_generators.add(tc1.generator_name)
+
+    if run_duplicate_check:
+        input_to_tcs = {}
+        for tc in test_cases:
+            tcs = input_to_tcs.get(tc.input_text, [])
+            tcs.append(tc)
+            input_to_tcs[tc.input_text] = tcs
+        for tcs in input_to_tcs.values():
+            if len(tcs) > 1:
+                logger.warning(f"Found duplicate tests: [{', '.join(str(tc.idx) for tc in tcs)}]. "
+                "Please fix this by changing arguments or setting different seed values.")
+
+    if not files.validators:
+        logger.warning(NO_VALIDATORS_FOUND_WARNING)
+    
     return test_cases
 
 

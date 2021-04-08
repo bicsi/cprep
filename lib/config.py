@@ -11,6 +11,7 @@ class ProblemConfig(BaseModel):
 
 class GenerationConfig(BaseModel):
     run_deterministic_check: bool 
+    run_duplicate_check: bool
     num_workers: int
     model_solution: str 
     

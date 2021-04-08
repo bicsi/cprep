@@ -7,7 +7,8 @@ compiler:
   args: ["-std=c++17", "-O3"]
 
 generation:
-  run_deterministic_check: No 
+  run_deterministic_check: Yes 
+  run_duplicate_check: Yes
   num_workers: 4
   model_solution: "sol.cpp"
 

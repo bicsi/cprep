@@ -1,6 +1,11 @@
-input_file: stdin
-output_file: stdout
-time_limit_ms: 400 
-model_solution: "sol.cpp"
-input_pattern: "test-{idx:02}.in"
-answer_pattern: "test-{idx:02}.ok"
+problem:
+  input_file: stdin
+  output_file: stdout
+  time_limit_ms: 400 
+
+generation:
+  model_solution: "sol.cpp"
+
+tests:
+  input_pattern: "test-{idx:02}.in"
+  answer_pattern: "test-{idx:02}.ok"
