@@ -43,8 +43,8 @@ def load_tests(files: Files, tests_dir: str, cfg: ProblemCfg):
             [gen_file] = gen_files
 
             # Read input and answer.
-            input_path = os.path.join(tests_dir, cfg.input_pattern.format(idx=idx))
-            answer_path = os.path.join(tests_dir, cfg.answer_pattern.format(idx=idx))
+            input_path = os.path.join(tests_dir, cfg.input_pattern.format(idx=idx, gen=gen_file.name))
+            answer_path = os.path.join(tests_dir, cfg.answer_pattern.format(idx=idx, gen=gen_file.name))
             input_text, answer_text = None, None
             if os.path.exists(input_path):
                 with open(input_path, 'rb') as f:

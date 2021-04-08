@@ -103,8 +103,7 @@ def compute_evaluation_results(
                 continue
             time_limit_ms = cfg.time_limit_ms
             res = evaluation.evaluate_solution(
-                sol, tc.input_text, tc.answer_text, 
-                cfg=cfg, 
+                sol, tc.input_text, tc.answer_text, cfg,
                 timeout_ms=time_limit_ms * timeout_multiplier,
                 checker_file=checker_file)
             verdict = res.verdict
@@ -157,10 +156,12 @@ def _generate_test_cases(
             # Write tests to disk.
             os.makedirs(tests_dir, exist_ok=True)
             with open(os.path.join(tests_dir, 
-                    cfg.input_pattern.format(idx=tc.idx)), 'wb') as f:
+                    cfg.input_pattern.format(
+                        idx=tc.idx, gen=tc.generator_name)), 'wb') as f:
                 f.write(tc.input_text)
             with open(os.path.join(tests_dir, 
-                    cfg.answer_pattern.format(idx=tc.idx)), 'wb') as f:
+                    cfg.answer_pattern.format(
+                        idx=tc.idx, gen=tc.generator_name)), 'wb') as f:
                 f.write(tc.answer_text)
         else:
             tc.input_text = tc.answer_text = None
@@ -181,7 +182,7 @@ def _generate_test_cases(
             "Please fix this by changing arguments or setting different seed values.")
     print(f"Tests written to '{os.path.join(tests_dir, '')}'.")
     print()
-    
+
     return test_cases
 
 

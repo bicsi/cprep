@@ -9,6 +9,15 @@ import multiprocessing
 from lib.files import Files 
 
 
+def _clean_text(text: str):
+    if not text:
+        return text
+    lines = []
+    for line in text.splitlines():
+        lines.append(line.rstrip())
+    return b"".join(line + b'\n' for line in lines)
+
+
 def _generate_test_case(
         gen_file: File, 
         model_sol_file: File, 
@@ -23,14 +32,19 @@ def _generate_test_case(
         if not validate_test_case(input_text, valid_file, cfg):
             return None
     model_eval_result = evaluation.run_solution(
-        model_sol_file, input_text, cfg=cfg)
+        model_sol_file, input_text, cfg, timeout_ms=cfg.time_limit_ms*3)
+    model_eval_result.input = _clean_text(model_eval_result.input)
+    model_eval_result.output = _clean_text(model_eval_result.output)
     return model_eval_result
 
 
-def _evaluate(sol: File, checker: Optional[File], 
-        cfg: ProblemCfg, input: str, answer: str):
+def _evaluate(
+        sol: File, checker: Optional[File], cfg: ProblemCfg,
+        input: str, answer: str, timeout_ms: Optional[float] = None):
     return evaluation.evaluate_solution(
-        sol, input, answer, cfg, checker)
+        sol, input, answer, cfg,
+        timeout_ms=timeout_ms, 
+        checker_file=checker)
 
 
 def _chunk(iterable, k):
@@ -51,15 +65,15 @@ def _generate_stress_goal(
     best_value, best_salt = -2e100, None
     input_text, answer_text = None, None
 
-    salts = [base64.b64encode(random.randbytes(8)) 
-            for _ in range(n_iters)]
+    salts = [str(i) for i in range(n_iters)]
+
     pool = multiprocessing.Pool(num_workers)
     for chunk_salts in _chunk(salts, num_workers):
         results = pool.map(generate, chunk_salts)
         for salt, res in zip(chunk_salts, results):
             if not res:
                 continue 
-            print(res.input.decode('utf-8'))
+            # print(res.input.decode('utf-8'))
             assert res.verdict == 'AC', "Model solution did not run successfully"
             stderr_lines = res.stderr.splitlines()
             assert stderr_lines, "Model solution did not output values on stderr for stress-test optimization"
@@ -85,8 +99,8 @@ def _generate_stress_fail(
     def key(verdict):
         return (0 if verdict == 'AC' else 1 if verdict == 'TLE' else 2)
 
-    salts = [base64.b64encode(random.randbytes(8)) 
-            for _ in range(n_iters)]
+    salts = [str(i) for i in range(n_iters)]
+    
     pool = multiprocessing.Pool(num_workers)
 
     for chunk_salts in _chunk(salts, num_workers):
@@ -160,8 +174,7 @@ def generate_test_case(
         assert len(target_sols) == 1, f"Target solution: '{target}' not found."
         [target_sol] = target_sols
         
-        evaluate = functools.partial(_evaluate, 
-            target_sol, checker_file, cfg)
+        evaluate = functools.partial(_evaluate, target_sol, checker_file, cfg)
         
         best_verdict, best_time, best_salt, tc.input_text, tc.answer_text = \
             _generate_stress_fail(generate, evaluate, n_iters, num_workers)    
@@ -171,6 +184,7 @@ def generate_test_case(
         raise ValueError(f"Unrecognized special kind: '{special[0]}'")
     
     return tc.generated
+
 
 def validate_test_case(input_text: str, valid_file: File, cfg: ProblemCfg):
     assert valid_file.compiled, "Validator is not compiled."
