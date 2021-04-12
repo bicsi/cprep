@@ -1,10 +1,13 @@
 temp_dir: ".temp"
 debug: False
 
-compiler:
-  output_dir: "exec"
-  gcc: "g++-10"
-  args: ["-std=c++17", "-O3"]
+compilation:
+  exec_dir: "exec"
+  languages:
+    - name: C++
+      exts: ["cpp", "cc"] 
+      compile: "g++ -std=c++17 -O3 {src_path} -o {exec_path}"
+      run: "{exec_path}"
 
 generation:
   run_deterministic_check: Yes 

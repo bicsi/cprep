@@ -8,10 +8,14 @@ import hashlib
 from lib.base import File, EvalResult
 
 
-def compile(f: File, gcc_path: str, gcc_args: List[str], output_dir: str):
+def compile(f: File, compile_args: List[str], output_dir: str):
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f.name)
     cache_path = os.path.join(output_dir, 'cache.txt')
+    compile_args = [
+        arg.format(exec_path=output_path, src_path=f.src_path)
+        for arg in compile_args]
+
     cache = {}
     if os.path.exists(cache_path):
         with open(cache_path, 'r') as stream:
@@ -27,9 +31,7 @@ def compile(f: File, gcc_path: str, gcc_args: List[str], output_dir: str):
         return True, True
 
     try:
-        subprocess.run(
-            [gcc_path] + gcc_args + [f.src_path, '-o', output_path], 
-            check=True, capture_output=True)
+        subprocess.run(compile_args, check=True, capture_output=True)
         f.exec_path = output_path
         cache[f.name] = sha 
         with open(cache_path, 'w') as stream:

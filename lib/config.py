@@ -1,5 +1,5 @@
 from dataclasses import dataclass, is_dataclass
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Optional
 import yaml 
 from pydantic import BaseModel 
 
@@ -26,11 +26,17 @@ class TestsConfig(BaseModel):
     input_pattern: str 
     answer_pattern: str 
     
+
+class LanguageConfig(BaseModel):
+    name: str 
+    exts: List[str]
+    compile: Optional[str]
+    run: str
+
     
-class CompilerConfig(BaseModel):
-    output_dir: str
-    gcc: str 
-    args: List[str]
+class CompilationConfig(BaseModel):
+    exec_dir: str
+    languages: List[LanguageConfig]
 
 
 class Pattern(BaseModel):
@@ -47,7 +53,7 @@ class Config(BaseModel):
     debug: bool 
     temp_dir: str 
     discovery: DiscoveryConfig
-    compiler: CompilerConfig
+    compilation: CompilationConfig
     problem: ProblemConfig
     generation: GenerationConfig 
     tests: TestsConfig

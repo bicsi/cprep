@@ -51,19 +51,20 @@ def discover_files(cfg: Config, solutions=None):
 
 
 def compile_files(files: Files, cfg: Config):
-    output_dir = os.path.join(cfg.temp_dir, cfg.compiler.output_dir) 
-    gcc_path = cfg.compiler.gcc
-    gcc_args = cfg.compiler.args
-    
-    print("Compiling all cpp files...")
-    solutions = [f for f in files.files if f.ext == 'cpp']
-    pad_len = max(len(f.name) for f in solutions)
-    for f in solutions:
-        print(f" - {pad(f.name, pad_len)} ", end='', flush=True)
+    output_dir = os.path.join(cfg.temp_dir, cfg.compilation.exec_dir)
+    print("Compiling all files...")
+    ext_to_lang_config = {
+        ext: lang_cfg
+        for lang_cfg in cfg.compilation.languages 
+        for ext in lang_cfg.exts}
+    compile_files = [f for f in files.files if f.ext in ext_to_lang_config]
+    pad_len = max(len(f.src_path) for f in compile_files)
+    for f in compile_files:
+        print(f" - {pad(f.src_path, pad_len)} ", end='', flush=True)
+        lang_config = ext_to_lang_config[f.ext]
         compiled, used_cache = compiler.compile(f, 
-            gcc_path=gcc_path, gcc_args=gcc_args, 
+            compile_args=lang_config.compile.split(), 
             output_dir=output_dir)
-
         line = GREEN_TICK if compiled else RED_CROSS
         if used_cache:
             line += f" {Style.DIM}(cached){Style.RESET_ALL}"

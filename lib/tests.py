@@ -27,7 +27,6 @@ def load_tests(files: Files, cfg: TestsConfig):
                 if line.startswith('#'):
                     continue 
                 test_groups[-1].append(line.strip())
-    
     test_cases = []
     idx = 1
     for group_idx, group in enumerate(test_groups):
