@@ -1,21 +1,20 @@
 from setuptools import setup
 
-with open("requirements.txt", "r") as f:
-    install_requires = list(map(str.rstrip, f.read().splitlines()))
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
+
 setup(
     name='cprep',
-    version='0.1.0',    
+    version='0.1.1',    
     description='Preparing contests made easy',
     long_description=long_description,
     url='https://github.com/bicsi/testutil',
     author='Stephen Hudson',
     author_email='bicsi@ymail.com',
     license='GNU General Public License',
-    install_requires=install_requires,
+    install_requires=['colorama', 'loguru', 'pydantic', 'PyYAML', 'tabulate', 'typing-extensions'],
     packages=['cprep', 'cprep_cli', 'cprep_cli.commands'],
     classifiers=[
         'Development Status :: 1 - Planning',

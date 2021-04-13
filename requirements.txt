@@ -1,6 +1,0 @@
-colorama
-loguru
-pydantic
-PyYAML
-tabulate
-typing-extensions
