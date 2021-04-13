@@ -1,13 +1,13 @@
-from lib.base import TestCase, File
-from lib.config import TestsConfig, ProblemConfig, GenerationConfig
+from .base import TestCase, File
+from .config import TestsConfig, ProblemConfig, GenerationConfig
 from typing import List, Optional
 import os
-from lib import compiler, evaluation
+from . import compilation, evaluation
 import base64 
 import random
 import functools 
 import multiprocessing
-from lib.files import Files 
+from .files import Files 
 
 
 def _clean_text(text: str):
@@ -28,7 +28,7 @@ def _generate_test_case(
         salt: str = None):
     if salt:
         args = args + [salt]
-    input_text = compiler.run(gen_file, args)
+    input_text = compilation.run(gen_file, args)
     for valid_file in valid_files:
         if not validate_test_case(input_text, valid_file, cfg):
             return None

@@ -5,7 +5,7 @@ from loguru import logger
 import time
 import hashlib
 
-from lib.base import File, EvalResult
+from cprep.base import File, EvalResult
 
 
 def compile(f: File, compile_args: List[str], output_dir: str):

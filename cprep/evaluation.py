@@ -1,6 +1,6 @@
 import subprocess
-from lib.base import EvalResult, File
-from lib.config import ProblemConfig
+from .base import EvalResult, File
+from .config import ProblemConfig
 from typing import Optional
 import time 
 import os

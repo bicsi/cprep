@@ -1,7 +1,6 @@
 import shutil
 import argparse
 from colorama import Fore, Style
-from lib import config
 import os 
 import sys 
 

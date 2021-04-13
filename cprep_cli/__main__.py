@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-
-import commands
 import argparse
 import os 
-import yaml
-from colorama import Fore 
-from lib import config 
+import yaml 
+
+from . import commands 
+from cprep import config
 
 
 def parse_args():
@@ -26,7 +25,7 @@ def parse_args():
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
     dicts = []
     for path in [os.path.dirname(__file__), ""]:
@@ -53,3 +52,7 @@ if __name__ == "__main__":
         print()
         print(f"{Fore.RED}[E]: {ex}{Fore.RESET}")
         exit(6)
+
+
+if __name__ == "__main__":
+    main()

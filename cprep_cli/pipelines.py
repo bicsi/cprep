@@ -1,17 +1,20 @@
 import subprocess
-from lib.base import EvalResult, File, TestCase
 from typing import Optional, List
 import time 
-from lib import compiler, evaluation, generation, config, tests
-from lib.utils import pad 
 from colorama import Style, Fore 
 import os 
 import contextlib
 import functools
-from lib.files import Files 
-from lib.config import Config
-from lib import logger 
 import copy
+
+from .utils import pad 
+from . import logger
+
+from cprep import compilation, evaluation, generation, config, tests
+from cprep.base import EvalResult, File, TestCase
+from cprep.files import Files 
+from cprep.config import Config
+
 
 
 RED_CROSS = f'{Fore.RED}\u00d7{Fore.RESET}'
@@ -62,7 +65,7 @@ def compile_files(files: Files, cfg: Config):
     for f in compile_files:
         print(f" - {pad(f.src_path, pad_len)} ", end='', flush=True)
         lang_config = ext_to_lang_config[f.ext]
-        compiled, used_cache = compiler.compile(f, 
+        compiled, used_cache = compilation.compile(f, 
             compile_args=lang_config.compile.split(), 
             output_dir=output_dir)
         line = GREEN_TICK if compiled else RED_CROSS

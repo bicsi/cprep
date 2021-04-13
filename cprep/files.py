@@ -1,7 +1,7 @@
-from lib.base import File 
+from .base import File 
+from . import config
 import glob 
 import os 
-from lib import config
 
 
 KINDS = ['generator', 'validator', 'solution', 'tests']

@@ -1,7 +1,7 @@
 import argparse 
 import yaml
 import os 
-from lib import pipelines
+from .. import pipelines
 
 
 parser = argparse.ArgumentParser(add_help=False)

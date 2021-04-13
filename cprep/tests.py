@@ -1,8 +1,9 @@
 from typing import List
-from lib.base import File, TestCase
-from lib.config import ProblemConfig, TestsConfig
-from lib.files import Files
 import os
+
+from .base import File, TestCase
+from .config import ProblemConfig, TestsConfig
+from .files import Files
 
 
 def load_tests(files: Files, cfg: TestsConfig):

@@ -1,5 +1,5 @@
 import argparse
-from lib import pipelines
+from .. import pipelines
 import os 
 import yaml 
 
