@@ -39,7 +39,7 @@ You can optionally specify which submissions to evaluate.
 You can also opt to run all of the above steps in order by typing `cprep runall`. 
 
 
-_Note: You can always check the available options by running `cprep --help`, and even `cprep [COMMAND] --help`. All of the above commands will require you to have testutil added to your PATH._
+_Note: You can always check the available options by running `cprep --help`, and even `cprep [COMMAND] --help`._
 
 
 ## Configuration
