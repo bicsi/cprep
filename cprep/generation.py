@@ -177,7 +177,7 @@ def generate_test_case(
         assert len(target_sols) == 1, f"Target solution: '{target}' not found."
         [target_sol] = target_sols
         
-        evaluate = functools.partial(_evaluate, target_sol, checker_file, cfg)
+        evaluate = functools.partial(_evaluate, target_sol, checker_file, problem_cfg)
         
         best_verdict, best_time, best_salt, tc.input_text, tc.answer_text = \
             _generate_stress_fail(generate, evaluate, n_iters, num_workers)    

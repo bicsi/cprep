@@ -28,7 +28,6 @@ class TestsConfig(BaseModel):
     
 
 class LanguageConfig(BaseModel):
-    name: str 
     exts: List[str]
     compile: Optional[str]
     run: str
@@ -36,7 +35,7 @@ class LanguageConfig(BaseModel):
     
 class CompilationConfig(BaseModel):
     exec_dir: str
-    languages: List[LanguageConfig]
+    languages: Dict[str, LanguageConfig]
 
 
 class Pattern(BaseModel):

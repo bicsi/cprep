@@ -2,14 +2,17 @@
 import argparse
 import os 
 import yaml 
+from colorama import Fore 
+import sys 
 
 from . import commands 
 from cprep import config
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='commands')
+    parser = argparse.ArgumentParser(description="Cprep - preparing contests made easy")
+    subparsers = parser.add_subparsers(help='commands', dest='cmd')
+    subparsers.required = True
     
     for command_module in [
             commands.runall, commands.create, 
@@ -28,16 +31,17 @@ def parse_args():
 def main():
     args = parse_args()
     dicts = []
-    for path in [os.path.dirname(__file__), ""]:
-        config_path = os.path.join(path, "config.yaml")
+    for config_path in [
+            os.path.join(os.path.dirname(__file__), 'config.yaml'), 
+            os.path.expanduser(os.path.join('~', '.cprep.yaml')),
+            "config.yaml"]:
         if not os.path.exists(config_path):
-            if path == '' and args.command not in ['create', 'config']:
+            if config_path == 'config.yaml' and args.command not in ['create', 'config']:
                 print()
-                print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory ")
-                print(f"  (file 'config.yaml' not found){Fore.RESET}")
-                print(f"Note: If using an older version of testutil, "
+                print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory (file 'config.yaml' not found){Fore.RESET}")
+                print(f"Note: If using an older version, "
                     "please rename and reconfigure 'problem.yaml' file to match "
-                    "the structure of `testutil config`")
+                    f"the structure of `{sys.argv[0].split('/')[-1]} config`")
                 exit(6)
             continue
         with open(config_path, 'r') as f:

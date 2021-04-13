@@ -4,7 +4,7 @@ debug: False
 compilation:
   exec_dir: "exec"
   languages:
-    - name: C++
+    C++:
       exts: ["cpp", "cc"] 
       compile: "g++ -std=c++17 -O3 {src_path} -o {exec_path}"
       run: "{exec_path}"

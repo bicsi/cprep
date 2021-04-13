@@ -58,7 +58,7 @@ def compile_files(files: Files, cfg: Config):
     print("Compiling all files...")
     ext_to_lang_config = {
         ext: lang_cfg
-        for lang_cfg in cfg.compilation.languages 
+        for lang_cfg in cfg.compilation.languages.values() 
         for ext in lang_cfg.exts}
     compile_files = [f for f in files.files if f.ext in ext_to_lang_config]
     pad_len = max(len(f.src_path) for f in compile_files)

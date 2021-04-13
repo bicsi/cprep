@@ -10,7 +10,6 @@ parser.add_argument("tests", nargs="*",
 
 
 def run(cfg, args):
-    
     files = pipelines.discover_files(cfg)
 
     pipelines.compile_files(files, cfg)
