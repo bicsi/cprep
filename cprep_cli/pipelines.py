@@ -3,7 +3,6 @@ from typing import Optional, List
 import time
 from colorama import Style, Fore
 import os
-import contextlib
 import functools
 import copy
 
@@ -14,11 +13,13 @@ from cprep import compilation, evaluation, generation, config, tests
 from cprep.base import EvalResult, File, TestCase
 from cprep.files import Files
 from cprep.config import Config
+import sys
 
+RED_CROSS = (Fore.RED + (u'\u2717' if sys.stdout.encoding ==
+                         'utf-8' else 'X') + Fore.RESET)
 
-RED_CROSS = Fore.RED + u'\u2717' + Fore.RESET
-GREEN_TICK = Fore.GREEN + u'\u2713' + Fore.RESET
-
+GREEN_TICK = (Fore.GREEN + (u'\u2713' if sys.stdout.encoding ==
+                            'utf-8' else 'V') + Fore.RESET)
 
 NON_DETERMINISTIC_WARNING = """\
 Generator '{name}' seems to be non-deterministic.
