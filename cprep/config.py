@@ -59,30 +59,3 @@ class Config(BaseModel):
     evaluation: EvaluationConfig
     problem: ProblemConfig
    
-
-def load(*dicts):
-    def merge_rec(d1: dict, d2: dict):
-        for k, v in d2.items():
-            child = d1.get(k, {})
-            if isinstance(v, dict):
-                merge_rec(child, v)
-            else:
-                child = v
-            d1[k] = child
-
-    def load_rec(typ, d):
-        if is_dataclass(typ):
-            assert isinstance(d, dict), f"Format error: '{d}'"
-            kwargs = {}
-            fields = typ.__dataclass_fields__
-            for k, v in d.items():
-                kwargs[k] = load_rec(fields[k].type, v)
-            return typ(**kwargs)
-        elif isinstance(typ, List):
-            assert False
-        return d
-
-    cfg = {}
-    for d in dicts:
-        merge_rec(cfg, d)
-    return Config(**cfg)

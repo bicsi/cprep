@@ -4,9 +4,12 @@ import os
 import yaml 
 from colorama import Fore 
 import sys 
+import shutil
+from pathlib import Path
 
 from . import commands 
-from cprep import config
+from cprep.config import Config
+from . import USER_CONFIG_DIR
 
 
 def parse_args():
@@ -28,28 +31,60 @@ def parse_args():
     return parser.parse_args()
 
 
+def load_config(args):
+    cfg = {}
+    def merge_rec(d1: dict, d2: dict):
+        for k, v in d2.items():
+            child = d1.get(k, {})
+            if isinstance(v, dict):
+                merge_rec(child, v)
+            else:
+                child = v
+            d1[k] = child
+
+    def load_rec(typ, d):
+        if is_dataclass(typ):
+            assert isinstance(d, dict), f"Format error: '{d}'"
+            kwargs = {}
+            fields = typ.__dataclass_fields__
+            for k, v in d.items():
+                kwargs[k] = load_rec(fields[k].type, v)
+            return typ(**kwargs)
+        elif isinstance(typ, List):
+            assert False
+        return d
+    
+    def load_path(path):
+        if not path.exists():
+            return False 
+        with open(path, 'r') as f:
+            d = yaml.load(f, Loader=yaml.FullLoader)
+            if d:
+                merge_rec(cfg, d)
+        return True
+        
+    assert load_path(Path(__file__).parent / 'config.yaml')
+    user_path = Path(USER_CONFIG_DIR).expanduser() / 'config.yaml'
+    if not user_path.exists():
+        os.makedirs(user_path.parent, exist_ok=True)
+        shutil.copy(Path(__file__).parent / 'userdata' / 'config.yaml', user_path)
+    assert load_path(user_path)
+    if (not load_path(Path('.') / 'config.yaml') and 
+            args.command not in ['create', 'config']):
+        print()
+        print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory (file 'config.yaml' not found){Fore.RESET}")
+        print(f"Note: If using an older version, "
+            "please rename and reconfigure 'problem.yaml' file to match "
+            f"the structure of `{sys.argv[0].split('/')[-1]} config`")
+        exit(6)
+    return Config(**cfg)
+
+
 def main():
     args = parse_args()
-    dicts = []
-    for config_path in [
-            os.path.join(os.path.dirname(__file__), 'config.yaml'), 
-            os.path.expanduser(os.path.join('~', '.cprep.yaml')),
-            "config.yaml"]:
-        if not os.path.exists(config_path):
-            if config_path == 'config.yaml' and args.command not in ['create', 'config']:
-                print()
-                print(f"{Fore.RED}[E]: You don't seem to be inside a problem directory (file 'config.yaml' not found){Fore.RESET}")
-                print(f"Note: If using an older version, "
-                    "please rename and reconfigure 'problem.yaml' file to match "
-                    f"the structure of `{sys.argv[0].split('/')[-1]} config`")
-                exit(6)
-            continue
-        with open(config_path, 'r') as f:
-            dicts.append(yaml.load(f, Loader=yaml.FullLoader))
-    cfg = config.load(*dicts)
+    cfg = load_config(args)
     if cfg.debug:
         print(yaml.dump(cfg.dict()))
-
     try:
         args.run(cfg, args)
     except AssertionError as ex:
