@@ -7,7 +7,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='cprep',
-    version='0.1.3',    
+    version='0.1.9',    
     description='Preparing contests made easy',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -28,6 +28,10 @@ setup(
         console_scripts=['cprep=cprep_cli.__main__:main'],
     ),
     package_data={
-      'cprep_cli': ['*.yaml', 'skel/*.*']
+      'cprep_cli': [
+          'config.yaml', 
+          'userdata/config.yaml', 
+          'userdata/template/*.*',
+        ]
     }
 )
