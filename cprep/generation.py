@@ -100,11 +100,12 @@ def _generate_stress_fail(
     def key(verdict):
         return (0 if verdict == 'AC' else 1 if verdict == 'TLE' else 2)
 
-    salts = [str(i) for i in range(n_iters)]
+    salts = (str(i) for i in range(n_iters))
     
     pool = multiprocessing.Pool(num_workers)
 
     for chunk_salts in _chunk(salts, num_workers):
+        print(chunk_salts)
         if key(best_verdict) > 1:
             break
         model_results = pool.map(generate, chunk_salts)
@@ -117,6 +118,8 @@ def _generate_stress_fail(
                 continue
             assert m_res.verdict == 'AC', "Model solution did not run successfully"
             s_res = sol_results.pop(0)
+            
+            print(m_res.input, s_res)
 
             if (key(best_verdict), best_time < key(s_res.verdict), s_res.time_exec_ms):
                 best_verdict, best_time = s_res.verdict, s_res.time_exec_ms
@@ -172,7 +175,7 @@ def generate_test_case(
     elif special[0] == 'stress-fail':
         [_, target, n_iters] = special 
         n_iters = int(n_iters)
-
+        
         target_sols = [f for f in files.solutions if f.name == target]
         assert len(target_sols) == 1, f"Target solution: '{target}' not found."
         [target_sol] = target_sols
