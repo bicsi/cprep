@@ -35,10 +35,13 @@ have validators, to check generator output."
 def discover_files(cfg: Config, solutions=None):
     patterns = cfg.discovery.patterns
     model_solution = cfg.generation.model_solution
-
+    
     # If solutions are specified, discard the discovered solutions
     # and use the provided ones instead.
-    files = Files("", patterns, model_solution=model_solution)
+    files = Files(
+        "", patterns, 
+        model_solution=model_solution, 
+        problem=cfg.problem.name)
     if solutions:
         files.files = [f for f in files.files if f.kind != 'solution']
         for src_path in solutions:

@@ -4,6 +4,7 @@ import yaml
 from pydantic import BaseModel 
 
 class ProblemConfig(BaseModel):
+    name: str
     input_file: str 
     output_file: str 
     time_limit_ms: float 

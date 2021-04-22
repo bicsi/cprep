@@ -32,12 +32,26 @@ problem:
 
 discovery:
   patterns:
+  - pattern: "tests.sh"
+    kind: tests
+
   - pattern: "gen*.cpp"
     kind: generator
   - pattern: "valid*.cpp"
     kind: validator
   - pattern: "sol*.cpp"
     kind: solution
-  - pattern: "tests.sh"
-    kind: tests
+
+  - pattern: "{problem}-gen*.cpp"
+    kind: generator
+  - pattern: "{problem}_gen*.cpp"
+    kind: generator
+
+  - pattern: "{problem}-valid*.cpp"
+    kind: validator
+  - pattern: "{problem}_valid*.cpp"
+    kind: validator
+  
+  - pattern: "{problem}*.cpp"
+    kind: solution
 

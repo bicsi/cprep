@@ -7,7 +7,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='cprep',
-    version='0.1.9',    
+    version='0.1.10',    
     description='Preparing contests made easy',
     long_description=long_description,
     long_description_content_type='text/markdown',

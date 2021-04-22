@@ -36,7 +36,7 @@ def parse_args():
 
 
 def load_config(args):
-    cfg = {}
+    cfg = {"problem": {"name": Path(os.getcwd()).name}}
 
     def merge_rec(d1: dict, d2: dict):
         for k, v in d2.items():

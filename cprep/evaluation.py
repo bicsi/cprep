@@ -76,8 +76,12 @@ def run_solution(
 
 def evaluate_solution(
         sol_file: File, input: str, answer: str, cfg: ProblemConfig,
-        timeout_ms: float = None, checker_file: Optional[File] = None):
-    res = run_solution(sol_file, input, cfg, timeout_ms=timeout_ms)
+        timeout_ms: float = None, checker_file: Optional[File] = None,
+        run_twice: bool = True):
+    res = run_solution(
+        sol_file, input, 
+        cfg, timeout_ms=timeout_ms, 
+        run_twice=run_twice)
     if res.verdict == 'AC' and res.time_exec_ms > cfg.time_limit_ms:
         res.verdict = 'TLE'
     if (res.verdict == 'AC' and not check_output(

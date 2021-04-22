@@ -8,6 +8,7 @@ import random
 import functools 
 import multiprocessing
 from .files import Files 
+import time
 
 
 def _clean_text(text: str):
@@ -33,7 +34,10 @@ def _generate_test_case(
         if not validate_test_case(input_text, valid_file, cfg):
             return None
     model_eval_result = evaluation.run_solution(
-        model_sol_file, input_text, cfg, timeout_ms=cfg.time_limit_ms*3)
+        model_sol_file, input_text, 
+        cfg, timeout_ms=cfg.time_limit_ms*3,
+        run_twice=False)
+    tb = time.time()
     model_eval_result.input = _clean_text(model_eval_result.input)
     model_eval_result.output = _clean_text(model_eval_result.output)
     return model_eval_result
@@ -45,7 +49,8 @@ def _evaluate(
     return evaluation.evaluate_solution(
         sol, input, answer, cfg,
         timeout_ms=timeout_ms, 
-        checker_file=checker)
+        checker_file=checker,
+        run_twice=False)
 
 
 def _chunk(iterable, k):
@@ -103,24 +108,30 @@ def _generate_stress_fail(
     salts = (str(i) for i in range(n_iters))
     
     pool = multiprocessing.Pool(num_workers)
+    first_chunk = True
 
-    for chunk_salts in _chunk(salts, num_workers):
-        print(chunk_salts)
+    for chunk_salts in _chunk(salts, num_workers * 10):
+        # print(chunk_salts)
         if key(best_verdict) > 1:
             break
         model_results = pool.map(generate, chunk_salts)
         sol_results = pool.starmap(evaluate, [
             (m_res.input, m_res.output) 
             for m_res in model_results if m_res])
+        
+        if first_chunk:
+            sol_results = pool.starmap(evaluate, [
+                (m_res.input, m_res.output) 
+                for m_res in model_results if m_res])
+            first_chunk = False 
 
         for salt, m_res in zip(chunk_salts, model_results):
             if not m_res:
                 continue
             assert m_res.verdict == 'AC', "Model solution did not run successfully"
             s_res = sol_results.pop(0)
-            
-            print(m_res.input, s_res)
-
+            # print(s_res.stderr)
+            #print(m_res.stderr, s_res)
             if (key(best_verdict), best_time < key(s_res.verdict), s_res.time_exec_ms):
                 best_verdict, best_time = s_res.verdict, s_res.time_exec_ms
                 best_salt = salt 
@@ -183,8 +194,13 @@ def generate_test_case(
         evaluate = functools.partial(_evaluate, target_sol, checker_file, problem_cfg)
         
         best_verdict, best_time, best_salt, tc.input_text, tc.answer_text = \
-            _generate_stress_fail(generate, evaluate, n_iters, num_workers)    
-        tc.info = f"{best_verdict} ({round(best_time)})"
+            _generate_stress_fail(generate, evaluate, n_iters, num_workers)
+        if best_verdict in ['AC', 'TLE']:    
+            tc.info = f"#{best_salt}: {best_verdict} ({round(best_time)} ms)"
+        else:
+            tc.info = f"#{best_salt}: {best_verdict}"
+        tc.args.append(best_salt)
+        tc.special_args.clear()
     
     else:
         raise ValueError(f"Unrecognized special kind: '{special[0]}'")
